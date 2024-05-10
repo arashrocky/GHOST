@@ -9,17 +9,18 @@ import torchvision
 
 logger = logging.getLogger('AllReIDTracker')
 logger.setLevel(logging.INFO)
-# formatter = logging.Formatter('%(asctime)s - %(message)s')
-formatter = logging.Formatter('%(message)s')
 
+# Create a console handler and set its level
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
+# formatter = logging.Formatter('%(asctime)s - %(message)s')
+formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
-
+# Add the console handler to the logger
 logger.addHandler(ch)
 
 warnings.filterwarnings("ignore")
-
+# Logger informational message
 logger.info(torchvision.__version__)
 logger.info(torch.__version__)
 

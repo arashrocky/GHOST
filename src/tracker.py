@@ -3,7 +3,9 @@ import torch
 import os
 import numpy as np
 import logging
-from lapsolver import solve_dense
+# from lapsolver import solve_dense
+# from linear_assignment import solve_dense
+from scipy.optimize import linear_sum_assignment as solve_dense
 import json
 from src.tracking_utils import get_proxy, Track, multi_predict, get_iou_kalman
 from src.base_tracker import BaseTracker

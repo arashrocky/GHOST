@@ -20,18 +20,20 @@ class MOTLoader():
         self.mot_dir = osp.join(dataset_cfg['mot_dir'], dir)
         self.gt_dir = osp.join(dataset_cfg['gt_dir'], dir)
         self.det_dir = osp.join(dataset_cfg['det_dir'], dir)
-        self.det_file = dataset_cfg['det_file']
+        self.det_file = dataset_cfg['det_file'] #Actual value: det_file=yolox_dets.txt from main_17.sh
 
-    def get_seqs(self, split='split-1', assign_gt=True):
+    def get_seqs(self, split='split-1', assign_gt=True): 
+        #Actual values: assign_gt=False from TrackingDataset.py, split=splits= mot17_train frpm main_17.sh
         # iterate over sequences
         for s in self.sequence:
             # get gt and detections
             gt_file = osp.join(self.gt_dir, s, 'gt', 'gt.txt') 
-            exist_gt = os.path.isfile(gt_file) and assign_gt
+            exist_gt = os.path.isfile(gt_file) and assign_gt #exist_gt=False
             if self.det_file == 'gt.txt':
                 det_file = osp.join(self.det_dir, s, 'gt', self.det_file)
             else:
                 det_file = osp.join(self.det_dir, s, 'det', self.det_file)
+                # example det_file=GHOST Files/datasets/detections_GHOST/MOT17/train/MOT17-02-SDP/det/yolovx_dets.txt
             seq_file = osp.join(self.mot_dir, s, 'seqinfo.ini')
 
             self.get_seq_info(seq_file, gt_file, det_file)
@@ -197,7 +199,7 @@ class MOTLoader():
             test_data_ids = test_data_gt['id'].unique()
 
         cols = [
-            'frame',
+            'frame', #frame number
             'id',
             'bb_left',
             'bb_top',
@@ -205,8 +207,8 @@ class MOTLoader():
             'bb_height',
             'conf',
             'label',
-            'vis']
-        self.corresponding_gt = pd.DataFrame(columns=cols)
+            'vis'] #visibility
+        self.corresponding_gt = pd.DataFrame(columns=cols) #creating an empty dataframe "corresponding_gt"
 
         if not self.checkConsecutive(
                 set(sorted(self.dets['id'].values.tolist()))):
@@ -237,7 +239,8 @@ class MOTLoader():
             # get initial match to remove distractor classes
             matching_scores = deepcopy(similarity)
             matching_scores[matching_scores < 0.5 - np.finfo('float').eps] = 0
-            match_rows, match_cols = linear_sum_assignment(-matching_scores)
+            #linear_sum_assignment is Hungarian algorithm or the assignment problem
+            match_rows, match_cols = linear_sum_assignment(-matching_scores) 
             actually_matched_mask = matching_scores[match_rows,
                                                     match_cols] > 0 + np.finfo(
                                                         'float').eps
@@ -253,12 +256,12 @@ class MOTLoader():
                 frame_detects.index.values[to_remove_tracker])
             similarity = np.delete(similarity, to_remove_tracker, axis=1)
 
-            # only keep gt of person class + confidence = 1
+            # only keep gt of person class + confidence = 1 (class=1(person) & confidence=0)
             gt_zero_marked = frame_gt['conf'].values
             gt_to_keep_mask = (np.not_equal(gt_zero_marked, 0)) & \
                 (np.equal(frame_gt['label'].values, 1))
 
-            # remove gt its that are not of person class or have confidence 0
+            # remove gt that are not of person class or have confidence 0
             similarity = similarity[gt_to_keep_mask]
             frame_gt_drop = deepcopy(frame_gt).drop(
                 frame_gt.index.values[~gt_to_keep_mask])

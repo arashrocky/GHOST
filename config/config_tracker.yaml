@@ -68,7 +68,7 @@ tracker:
   motion_config:
     motion_compensation: 0
     num_iter_mc: 100
-    warp_mode: 'Euclidean'
+    warp_mode: 'Euclidean' #'Translation', 'Affine','Euclidean','Homography'
     termination_eps_mc: 0.00001
     apply_motion_model: 1
     center_only: 0

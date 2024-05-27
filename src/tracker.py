@@ -40,7 +40,7 @@ class Tracker(BaseTracker):
         '''
         first - feed all bounding boxes through net first for bn stats update
         seq -   sequence instance for iteratration and with meta information
-                like name or lentgth
+                like name or length
         '''
         self.log = log
         if self.log:
@@ -108,7 +108,7 @@ class Tracker(BaseTracker):
 
             # apply motion compensation to stored track positions
             if self.motion_model_cfg['motion_compensation']:
-                self.motion_compensation(whole_im, i)
+                self.motion_compensation(whole_im, i) #track.last_pos is updated based on translation part of transformation matrix
 
             # association over frames
             tr_ids = self._track(detections, i)
@@ -153,13 +153,15 @@ class Tracker(BaseTracker):
 
     def _track(self, detections, i):
         # get inactive tracks with inactive < patience
+        # self.curr_it is CURRent Inactive Tracks, a dictionary of {k:track}
+        # k=unique track ID for each track, track= track objects
         self.curr_it = {k: track for k, track in self.inactive_tracks.items()
                         if track.inactive_count <= self.inact_patience}
 
         # just add all bbs to self.tracks / intitialize in the first frame
         if len(self.tracks) == 0 and len(self.curr_it) == 0:
             tr_ids = list()
-            for detection in detections:
+            for detection in detections:#detections is series of all detected objects, each called detection, in one frame
                 self.tracks[self.id] = Track(
                     track_id=self.id,
                     **detection,
@@ -169,6 +171,7 @@ class Tracker(BaseTracker):
                 self.id += 1
 
         # association over frames for frame > 0
+        # i = frame number
         elif i > 0:
             # get hungarian matching
             if len(detections) > 0:
@@ -179,7 +182,7 @@ class Tracker(BaseTracker):
                         detections, sep=self.tracker_cfg['assign_separately'])
 
                 # get aveage of distances to all detections in track --> proxy dist
-                else:
+                else: # self.tracker_cfg[avg_inact][proxy]='each_sample'
                     dist, row, col, ids = self.get_hungarian_each_sample(
                         detections, sep=self.tracker_cfg['assign_separately'])
             else:
@@ -193,7 +196,7 @@ class Tracker(BaseTracker):
                     row=row,
                     col=col,
                     ids=ids,
-                    sep=self.tracker_cfg['assign_separately'])
+                    sep=self.tracker_cfg['assign_separately']) #assign_separately=0
 
         return tr_ids
 
@@ -303,14 +306,15 @@ class Tracker(BaseTracker):
         Solve hungarian assignment
         """
         # update thresholds
-        self.update_thresholds(dist, num_active, len(curr_it))
+        self.update_thresholds(dist, num_active, len(curr_it))#updating self.act_reid_thresh and self.inact_reid_thresh
 
         # get motion distance
-        if self.motion_model_cfg['apply_motion_model']:
+        if self.motion_model_cfg['apply_motion_model']:#apply_motion_model= 1
 
             # simple linear motion model
-            if not self.kalman:
-                self.motion()
+            if not self.kalman:#kalman=0
+                self.motion()# Applies a simple linear motion model that considers the last n_steps steps
+                # calculating "track.pos" based on velocity of previous frames
                 iou = self.get_motion_dist(detections, curr_it)
 
             # kalman fiter
@@ -326,14 +330,14 @@ class Tracker(BaseTracker):
             dist = self.combine_motion_appearance(iou, dist)
 
         # set values larger than thershold to nan --> impossible assignment
-        if self.nan_first:
+        if self.nan_first: #nan_first= 0
             dist[:, :num_active] = np.where(
                 dist[:, :num_active] <= self.act_reid_thresh, dist[:, :num_active], np.nan)
             dist[:, num_active:] = np.where(
                 dist[:, num_active:] <= self.inact_reid_thresh, dist[:, num_active:], np.nan)
 
         # solve at once
-        if not sep:
+        if not sep: #if based on sep value in "combine_motion_appearance" dist of active and inactive was not separate
             row, col = solve_dense(dist)
 
         # solve active first and inactive later
@@ -356,18 +360,20 @@ class Tracker(BaseTracker):
         ids = list()
         y_inactive, y = None, None
 
+        # x = ReId features of detected objects at current frame
         x = torch.stack([t['feats'] for t in detections])
 
         # Get active track proxies
         if len(self.tracks) > 0:
-            if self.tracker_cfg['avg_act']['do']:
+            if self.tracker_cfg['avg_act']['do']: #=0
+                # y = proxy feature from self.past_feats of "detections" in current track
                 y = get_proxy(
                     curr_it=self.tracks,
                     mode='act',
                     tracker_cfg=self.tracker_cfg,
-                    mv_avg=self.mv_avg)
+                    mv_avg=self.mv_avg) #mv_avg =moving average, initialized with empty dict at setup_seq
             else:
-                y = torch.stack(
+                y = torch.stack(# y is assembling ReID features of all detections (active tracks) in current frame
                     [track.feats for track in self.tracks.values()])
             ids += list(self.tracks.keys())
         # get num active tracks
@@ -388,6 +394,7 @@ class Tracker(BaseTracker):
                 y_inactive = torch.stack([track.feats
                                          for track in curr_it.values()])
 
+            # Concatenating ReID features of active and inactive tracks
             if len(self.tracks) > 0:
                 y = torch.cat([y, y_inactive])
             else:
@@ -435,8 +442,8 @@ class Tracker(BaseTracker):
         # move tracks not used to inactive tracks
         keys = list(self.tracks.keys())
         for k in keys:
-            if k not in active_tracks:
-                unconfirmed = len(
+            if k not in active_tracks:#If self.tracker_cfg['remove_unconfirmed'] is set to False, 
+                unconfirmed = len(#all tracks are considered unconfirmed regardless of the number of detections they have.
                     self.tracks[k]) >= 2 if self.tracker_cfg['remove_unconfirmed'] else True
                 if unconfirmed:
                     self.inactive_tracks[k] = self.tracks[k]

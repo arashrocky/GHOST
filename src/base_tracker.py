@@ -274,7 +274,7 @@ class BaseTracker():
                     logger.info(
                         "Using random patches of {}...".format(which_frame))
 
-            # either every frame of only first  frame
+            # either every frame of only first frame
             if not self.tracker_cfg['random_patches_first'] or i == 0:
                 self.encoder.train()
                 for m in self.encoder.modules():
@@ -384,7 +384,7 @@ class BaseTracker():
         '''
         * Run whole dataset in train mode to get statistics first and 
             then again in eval mode
-        * Run the first k frames in train mode and use ranom patches 
+        * Run the first k frames in train mode and use random patches 
             or bounding boxes of first k frames
         '''
 
@@ -457,7 +457,7 @@ class BaseTracker():
         self.thresh_every = True if self.act_reid_thresh == "every" else False
         self.thresh_tbd = True if self.act_reid_thresh == "tbd" else False
 
-        # initalize track storage
+        # initialize track storage
         self.tracks = defaultdict(list)
         self.inactive_tracks = defaultdict(list)
         self.mv_avg = dict()
@@ -474,7 +474,7 @@ class BaseTracker():
             seq.random_patches = self.tracker_cfg['random_patches'] or self.tracker_cfg[
                 'random_patches_first'] or self.tracker_cfg['random_patches_several_frames']
 
-        # get if sequence si moving and frame rate
+        # get if sequence is moving and frame rate
         self.is_moving = is_moving(seq.name)
         self.frame_rate = frame_rate(seq.name)
 
@@ -598,11 +598,14 @@ class BaseTracker():
         compensate ego motion for bounding boxes
         """
         # adapted from tracktor
+        # warp_matrix_nomr = norm of the transformation matrix.
         self.warp_matrix_nomr = None
         if im_index > 0:
             # im1 = reference frame, im2 = frame to convert
             # changed this from tracktor --> current img = reference
-            im1 = np.transpose(whole_image.cpu().numpy(), (1, 2, 0))
+            # convert images from the channel-first format (C=0, H=1, W=2) (common in PyTorch) 
+            # to the channel-last format (H=1, W=2, C=0) (expected by OpenCV functions) by (1, 2, 0):
+            im1 = np.transpose(whole_image.cpu().numpy(), (1, 2, 0)) 
             im2 = np.transpose(self.last_image.cpu().numpy(), (1, 2, 0))
             im1_gray = cv2.cvtColor(im1, cv2.COLOR_RGB2GRAY)
             im2_gray = cv2.cvtColor(im2, cv2.COLOR_RGB2GRAY)
@@ -611,11 +614,13 @@ class BaseTracker():
                 cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT,
                 self.motion_model_cfg['num_iter_mc'],
                 self.motion_model_cfg['termination_eps_mc'])
+            # cv2.findTransformECC estimates the warp matrix that aligns im2_gray to im1_gray  
+            # using the Enhanced Correlation Coefficient (ECC) maximization algorithm.
             _, warp_matrix = cv2.findTransformECC(
                 im1_gray, im2_gray, warp_matrix, self.warp_mode_dct[
-                    self.motion_model_cfg['warp_mode']], criteria, None, 15)
+                    self.motion_model_cfg['warp_mode']], criteria, None, 15) #warp_mode: 'Euclidean' 
             warp_matrix = torch.from_numpy(warp_matrix)
-            self.warp_matrix_nomr = np.linalg.norm(warp_matrix[:, -1])
+            self.warp_matrix_nomr = np.linalg.norm(warp_matrix[:, -1]) # extracting the last column of transformation matrix, representing translation of coordinates
             if self.is_moving and self.motion_model_cfg['motion_compensation']:
                 for tracks in [self.tracks, self.inactive_tracks]:
                     for k, track in tracks.items():
@@ -653,13 +658,13 @@ class BaseTracker():
         for track in self.tracks.values():
             if len(track.last_pos) > 1:
                 last_pos = np.asarray(
-                    track.last_pos[-self.motion_model_cfg['last_n_frames']:])
+                    track.last_pos[-self.motion_model_cfg['last_n_frames']:])# last_n_frames=90
                 frames = np.asarray(
                     track.past_frames[-self.motion_model_cfg['last_n_frames']:])
 
                 # avg velocity between each pair of consecutive positions in
                 # t.last_pos
-                if self.motion_model_cfg['center_only']:
+                if self.motion_model_cfg['center_only']:# center_only=0
                     if approximate:
                         vs = np.stack([get_center(p2) - get_center(p1)
                                        for p1, p2 in zip(last_pos, last_pos[1:])])
@@ -680,12 +685,14 @@ class BaseTracker():
                     if approximate:
                         vs = [p2 - p1 for p1,
                               p2 in zip(last_pos, last_pos[1:])]
-                    else:
+                    else:# np.repeat([4], axis=1) repeats the time differences of (N-1,1) to 4 columns, resulting in (N-1,4)
+                        # for (x, y,width,height per unit time) between consecutive frames.
                         vs = (last_pos[1:, ]-last_pos[:-1, ])/np.repeat(
                             np.expand_dims((frames[1:]-frames[:-1]), 1), [4], axis=1)
+                        # np.expand_dims((frames[1:] - frames[:-1]), 1) reshapes the 1D array of time differences to a 2D array of shape (N-1, 1).
 
                     # motion stepß
-                    track.update_v(vs.mean(axis=0))
+                    track.update_v(vs.mean(axis=0)) # updating past_vs and last_v
                     track.pos = track.pos + track.last_v
 
         # update for inactive tracks with last known dist
@@ -718,7 +725,7 @@ class BaseTracker():
             dist_iou = iou
 
         # weighted of threshold
-        if 'sum' in self.motion_model_cfg['combi']:
+        if 'sum' in self.motion_model_cfg['combi']: #combi= sum_0.6
             alpha = float(self.motion_model_cfg['combi'].split('_')[-1])
             dist = ((1-alpha)*dist_emb + alpha*dist_iou)
         elif self.motion_model_cfg['combi'] == 'SeperateAssignment':

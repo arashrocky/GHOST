@@ -98,8 +98,8 @@ class TrackingDataset():
             # save ground truth bbs and ground truth bbs corresponding to
             # detecionts
             if exist_gt and not 'bdd' in loader.mot_dir:
-                gt = loader.gt
-                corresponding_gt = loader.corresponding_gt
+                gt = loader.gt #all gt
+                corresponding_gt = loader.corresponding_gt #only gt of detected objects(=assigned_detects) (without gt of undetected objects)
             else:
                 corresponding_gt = None
                 gt = None

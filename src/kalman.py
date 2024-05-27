@@ -38,12 +38,15 @@ class KalmanFilter():
     """
 
     def __init__(self):
+        # dt = time step (set to 1 in this case).
         ndim, dt = 4, 1.
 
         # Create Kalman filter model matrices.
+        # self._motion_mat = motion model matrix, size(8x8)
         self._motion_mat = np.eye(2 * ndim, 2 * ndim)
         for i in range(ndim):
             self._motion_mat[i, ndim + i] = dt
+        # self._update_mat = observation model matrix, size (4x8)
         self._update_mat = np.eye(ndim, 2 * ndim)
 
         # Motion and observation uncertainty are chosen relative to the current
@@ -69,10 +72,12 @@ class KalmanFilter():
             to 0 mean.
 
         """
+        # meam_pos is initiated with bounding box (x, y, a, h)
         mean_pos = measurement
         mean_vel = np.zeros_like(mean_pos)
-        mean = np.r_[mean_pos, mean_vel]
+        mean = np.r_[mean_pos, mean_vel] #concatenation of mean_pos and mean_vel
 
+        # std is initiated by measurement[3]=height of bounding box
         std = [
             2 * self._std_weight_position * measurement[3],
             2 * self._std_weight_position * measurement[3],

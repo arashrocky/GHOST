@@ -278,6 +278,7 @@ class MOTLoader():
 
             # Hungarian algorithm to find best matches
             # --> dropped gt (distractor & zero masked) + dropped frames (distractor)
+            # corresponding_gt= only gt of detected objects(=assigned_detects) (without gt of undetected objects)
             corresponding_gt, assigned_detects = linear_sum_assignment(
                 -score_mat)
 

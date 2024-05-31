@@ -31,8 +31,10 @@ reid_net:
 
 tracker:
   kalman: 0
-  visualize: 0
-  store_feats: 0
+  # visualize: 0
+  visualize: 1
+  # store_feats: 0
+  store_feats: 1
   use_bism: 0
   nan_first: 0
   assign_separately: 0

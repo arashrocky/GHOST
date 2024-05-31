@@ -19,6 +19,9 @@ class MOTLoader():
 
         self.mot_dir = osp.join(dataset_cfg['mot_dir'], dir)
         self.gt_dir = osp.join(dataset_cfg['gt_dir'], dir)
+        # print(f'self.mot_dir is {self.mot_dir}')
+        # print(f'self.gt_dir is {self.gt_dir}')
+        # exit()
         self.det_dir = osp.join(dataset_cfg['det_dir'], dir)
         self.det_file = dataset_cfg['det_file'] #Actual value: det_file=yolox_dets.txt from main_17.sh
 
@@ -37,10 +40,9 @@ class MOTLoader():
             seq_file = osp.join(self.mot_dir, s, 'seqinfo.ini')
 
             self.get_seq_info(seq_file, gt_file, det_file)
-            self.get_dets(det_file, s)
+            self.get_dets(det_file, s) #self.dets size (34065x14)
             if exist_gt:
-                self.get_gt(gt_file)
-            
+                self.get_gt(gt_file) #self.gt size (26601x11)
             # keep unclipped version of bounding boxes
             self.dets_unclipped = deepcopy(self.dets)
             self.dets = self.clip_boxes_to_image(df=self.dets)
@@ -104,6 +106,8 @@ class MOTLoader():
                     'label',
                     'vis',
                     '?'])
+            # print(f'self.dets is {self.dets}')
+            # exit()
             self.dets['bb_left'] -= 1  # Coordinates are 1 based
             self.dets['bb_top'] -= 1
             self.dets['bb_right'] = (
@@ -220,6 +224,10 @@ class MOTLoader():
             print("now consecutive: {}".format(self.checkConsecutive(
                 set(sorted(self.gt['id'].values.tolist())))))
 
+        # print(set(sorted(self.gt['id'].values.tolist())))
+        # print(f'self.dets is {self.dets}')
+        # print(f'self.gt is {self.gt}')
+        # exit()
         num_gt_ids = len(set(sorted(self.gt['id'].values.tolist())))
 
         prev_timestep_tracker_id = np.nan * \

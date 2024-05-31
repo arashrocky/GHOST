@@ -1,7 +1,12 @@
 dataset:
-  mot_dir: "datasets/bdd100k"
-  gt_dir: "datasets/detections_GHOST/bdd100k"
-  det_dir: "datasets/detections_GHOST/bdd100k"
+  # mot_dir: "datasets/bdd100k"
+  mot_dir: "/data/arash/Datasets/GHOSTFiles/datasets/bdd100k"
+  # mot_dir: "/data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k"
+  # gt_dir: "datasets/detections_GHOST/bdd100k"
+  # gt_dir: "/data/arash/Datasets/GHOSTFiles/datasets/bdd100k/labels/boxtrack_20"
+  gt_dir: "/data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k"
+  # det_dir: "datasets/detections_GHOST/bdd100k"
+  det_dir: "/data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k"
   det_file: "bdd100k.txt" 
   detector: ""
   splits: "bdd100k" 
@@ -18,7 +23,8 @@ reid_net:
     name: 'Market'
     num_classes: 2820 #751
   encoder_params:
-    pretrained_path: 'ReID/trained_models/market_models/resnet50_Market.pth'
+    # pretrained_path: 'ReID/trained_models/market_models/resnet50_Market.pth'
+    pretrained_path: '/data/arash/Datasets/GHOSTFiles/ReID/trained_models/market_models/resnet50_Market.pth'
     net_type: "resnet50" #"IBN" #"resnet50" #"resnet50_analysis" #"resnet50_attention" #"resnet50" #"det_bb" #"batch_drop_block" #"query_guided" "resnet_attention"
     add_distractors: 0
     neck: 0
@@ -27,10 +33,12 @@ reid_net:
 
 tracker:
   kalman: 0
-  visualize: 0
+  # visualize: 0
+  visualize: 1
   store_feats: 0
   use_bism: 0
-  nan_first: 0
+  # nan_first: 0
+  nan_first: 1
   assign_separately: 0
   random_patches_several_frames: 0
   several_frames: 0
@@ -63,7 +71,7 @@ tracker:
   motion_config:
     motion_compensation: 0
     num_iter_mc: 100
-    warp_mode: 'Euclidean'
+    warp_mode: 'Euclidean' #'Translation', 'Affine','Euclidean','Homography'
     termination_eps_mc: 0.00001
     apply_motion_model: 1
     center_only: 0

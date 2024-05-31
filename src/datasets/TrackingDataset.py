@@ -91,7 +91,7 @@ class TrackingDataset():
                 loader = BDDLoader([seq], self.dataset_cfg, self.dir)
             else:
                 loader = MOTLoader([seq], self.dataset_cfg, self.dir)
-            exist_gt = loader.get_seqs(self.assign_gt)
+            exist_gt = loader.get_seqs(self.assign_gt) #BDD100k:assign_gt=False, MOT17:assign_gt=True
             dets = loader.dets
             dets_unclipped = loader.dets_unclipped
 
@@ -100,7 +100,7 @@ class TrackingDataset():
             if exist_gt and not 'bdd' in loader.mot_dir:
                 gt = loader.gt #all gt
                 corresponding_gt = loader.corresponding_gt #only gt of detected objects(=assigned_detects) (without gt of undetected objects)
-            else:
+            else: #in BDD case
                 corresponding_gt = None
                 gt = None
 

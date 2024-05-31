@@ -9,7 +9,7 @@ python tools/main_track.py \
     --store_feats 0 \
     --det_file yolox_dets.txt \
     --config_path config/config_tracker_bdd.yaml\
-     --split bdd100k_val \
+     --splits bdd100k_val \
      --only_pedestrian 0 \
      --new_track_conf 0.45 \
      --len_thresh 0 \

@@ -26,18 +26,20 @@ class BDDLoader(MOTLoader):
         self.det_file = dataset_cfg['det_file']
         self.dir = dir
 
-    def get_seqs(self, split='split-1', assign_gt=True):
+    # def get_seqs(self, split='split-1', assign_gt=True): #splits bdd100k_val
+    def get_seqs(self, split='split-1', assign_gt=False): #splits bdd100k_val
         # iterate over sequences
         for s in self.sequence:
             # get gt and detections
             gt_file = osp.join(self.gt_dir, s, 'gt', 'gt_bdd100k.txt')
+            # gt_file is /data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k/val/b20eae11-18cd8ca2/gt/gt_bdd100k.txt
             det_file = osp.join(self.det_dir, s, 'det', self.det_file)
-            self.get_seq_info(s)
-            exist_gt = self.seq_info['has_gt'] and assign_gt
-            self.get_dets(det_file, s)
-
+            # det_file is /data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k/val/b20eae11-18cd8ca2/det/yolox_dets.txt
+            self.get_seq_info(s) #=None
+            exist_gt = self.seq_info['has_gt'] and assign_gt #=True
+            self.get_dets(det_file, s) #self.dets size (2112x14)
             if exist_gt:
-                self.get_gt(gt_file)
+                self.get_gt(gt_file) #self.gt size (1295x11)
 
             # keep unclipped copy of detections and clip
             self.dets_unclipped = deepcopy(self.dets)
@@ -47,9 +49,9 @@ class BDDLoader(MOTLoader):
             self.dets_unclipped.sort_values(by='frame', inplace=True)
 
             # assign ground trudh
-            self.dets['detection_id'] = np.arange(self.dets.shape[0])
+            self.dets['detection_id'] = np.arange(self.dets.shape[0]) #self.dets size (2112x15)
             if exist_gt:
-                self.assign_gt_clear(split)
+                self.assign_gt_clear(split) #splits bdd100k_val
 
             self.dets.attrs.update(self.seq_info)
 
@@ -100,7 +102,8 @@ class BDDLoader(MOTLoader):
 
     def get_dets(self, det_file, s):
         img_dir = os.path.join(self.mot_dir, 'images', 'track', self.dir, s)
-        if osp.exists(det_file):
+        # img_dir is /data/arash/Datasets/GHOSTFiles/datasets/bdd100k/images/track/val/b20eae11-18cd8ca2
+        if osp.exists(det_file): #True
             names = [
                 'frame',
                 'id',
@@ -120,7 +123,7 @@ class BDDLoader(MOTLoader):
             # only keep tracking classes
             self.dets = self.dets[self.dets['label'].isin(
                 [0, 1, 2, 3, 4, 5, 6, 7])].copy()
-
+            
             # Coordinates are 1 based
             self.dets['bb_left'] -= 1
             self.dets['bb_top'] -= 1
@@ -156,7 +159,7 @@ class BDDLoader(MOTLoader):
         seq_info['has_gt'] = self.dir != 'test'
         self.seq_info = seq_info
 
-    def assign_gt_clear(self, split='split-1'):
+    def assign_gt_clear(self, split='split-1'):  #splits bdd100k_val
         """
         Assign ground truth same way as in clear metrics
         """
@@ -170,8 +173,7 @@ class BDDLoader(MOTLoader):
             'conf',
             'label',
             'vis']
-        self.corresponding_gt = pd.DataFrame(columns=cols)
-
+        self.corresponding_gt = pd.DataFrame(columns=cols) #empty DataFrame
         # check for consecutive
         if not self.checkConsecutive(
                 set(sorted(self.dets['id'].values.tolist()))):
@@ -187,7 +189,7 @@ class BDDLoader(MOTLoader):
         prev_timestep_tracker_id = np.nan * \
             np.zeros(num_gt_ids)  # For matching IDSW
         # distractor_classes = [2, 7, 8, 12]
-        from scipy.optimize import linear_sum_assignment
+        from scipy.optimize import linear_sum_assignment     
         for frame in self.dets['frame'].unique():
             # get df entries of current frame
             frame_detects = self.dets[self.dets.frame == frame]
@@ -207,13 +209,13 @@ class BDDLoader(MOTLoader):
                                                         'float').eps
             match_rows = match_rows[actually_matched_mask.numpy()]
             match_cols = match_cols[actually_matched_mask.numpy()]
-
+#####################################################################################
             # get current IDs for score matrix
             tracker_ids_t = frame_detects['id'].values
             gt_ids_t = frame_gt['id'].values
             score_mat = (tracker_ids_t[np.newaxis, :] ==
                          prev_timestep_tracker_id[gt_ids_t[:, np.newaxis]])
-
+#####################################################################################
             score_mat = 1000 * score_mat + similarity.numpy()
             score_mat[similarity < self.dataset_cfg[
                 'gt_assign_min_iou'] - np.finfo('float').eps] = 0

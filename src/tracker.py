@@ -132,7 +132,7 @@ class Tracker(BaseTracker):
         self.tracks.update(self.inactive_tracks)
 
         # write results
-        self.write_results(self.output_dir, seq.name)
+        self.write_results(self.output_dir, seq.name) #each line: <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
 
         # reset thresholds if every / tbd for next sequence
         self.reset_threshs()
@@ -153,7 +153,7 @@ class Tracker(BaseTracker):
 
     def _track(self, detections, i):
         # get inactive tracks with inactive < patience
-        # self.curr_it is CURRent Inactive Tracks, a dictionary of {k:track}
+        # self.curr_it is Current Inactive Tracks, a dictionary of {k:track}
         # k=unique track ID for each track, track= track objects
         self.curr_it = {k: track for k, track in self.inactive_tracks.items()
                         if track.inactive_count <= self.inact_patience}
@@ -330,16 +330,20 @@ class Tracker(BaseTracker):
             dist = self.combine_motion_appearance(iou, dist)
 
         # set values larger than thershold to nan --> impossible assignment
-        if self.nan_first: #nan_first= 0
+        large_value = 1e6
+        if self.nan_first: #nan_first= 1
+            dist[np.isnan(dist)] = large_value # Replace NaN values with a large value
             dist[:, :num_active] = np.where(
-                dist[:, :num_active] <= self.act_reid_thresh, dist[:, :num_active], np.nan)
+                dist[:, :num_active] <= self.act_reid_thresh, dist[:, :num_active], dist[:, :num_active] + large_value)
+                # dist[:, :num_active] <= self.act_reid_thresh, dist[:, :num_active], np.nan)
             dist[:, num_active:] = np.where(
-                dist[:, num_active:] <= self.inact_reid_thresh, dist[:, num_active:], np.nan)
+                dist[:, num_active:] <= self.inact_reid_thresh, dist[:, num_active:], dist[:, num_active:] + large_value)
+                # dist[:, num_active:] <= self.inact_reid_thresh, dist[:, num_active:], np.nan)
 
         # solve at once
         if not sep: #if based on sep value in "combine_motion_appearance" dist of active and inactive was not separate
+            np.savetxt("dist_matrix.txt", dist, fmt='%.6f')
             row, col = solve_dense(dist)
-
         # solve active first and inactive later
         else:
             dist_act = dist[:, :num_active]

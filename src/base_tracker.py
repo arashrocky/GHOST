@@ -145,7 +145,7 @@ class BaseTracker():
         """
         tracks_new = dict()
         for k, v in all_tracks.items():
-            if len(v) > self.tracker_cfg['length_thresh']:
+            if len(v) > self.tracker_cfg['length_thresh']:#=1
                 tracks_new[k] = v
             else:
                 logger.info(len(v))
@@ -159,9 +159,9 @@ class BaseTracker():
         <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
         """
 
-        all_tracks = self.make_results()
+        all_tracks = self.make_results() #{..., i: [x1,y1,x2,y2,label], ...}
 
-        if self.tracker_cfg['length_thresh']:
+        if self.tracker_cfg['length_thresh']:#=1
             all_tracks = self._remove_short_tracks(all_tracks)
 
         #format_str = "{}, -1, {}, {}, {}, {}, {}, -1, -1, -1"
@@ -182,7 +182,7 @@ class BaseTracker():
                     writer.writerow(
                         [frame,
                          i + 1,
-                         x1 + 1,
+                         x1 + 1,#1-indexing for the output, which is standard for MOT challenge datasets
                          y1 + 1,
                          x2 - x1,
                          y2 - y1,

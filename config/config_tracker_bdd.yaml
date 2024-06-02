@@ -3,7 +3,6 @@ dataset:
   mot_dir: "/data/arash/Datasets/GHOSTFiles/datasets/bdd100k"
   # mot_dir: "/data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k"
   # gt_dir: "datasets/detections_GHOST/bdd100k"
-  # gt_dir: "/data/arash/Datasets/GHOSTFiles/datasets/bdd100k/labels/boxtrack_20"
   gt_dir: "/data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k"
   # det_dir: "datasets/detections_GHOST/bdd100k"
   det_dir: "/data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k"

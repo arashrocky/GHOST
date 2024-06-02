@@ -210,6 +210,13 @@ class Manager():
             dataset_cfg=self.dataset_cfg,
             log=log
         )'''
+        self.MOT2BDD()
+        output_res, output_msg = evaluate_track_eval_bdd(
+            dir=self.dir,
+            tracker=self.tracker,
+            dataset_cfg=self.dataset_cfg,
+            log=log
+        )
         self.MOT2BDDTest()
 
         return output_res, output_msg

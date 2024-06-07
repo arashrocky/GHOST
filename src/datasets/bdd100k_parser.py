@@ -36,9 +36,9 @@ class BDDLoader(MOTLoader):
             det_file = osp.join(self.det_dir, s, 'det', self.det_file)
             # det_file is /data/arash/Datasets/GHOSTFiles/datasets/detections_GHOST/bdd100k/val/b20eae11-18cd8ca2/det/yolox_dets.txt
             self.get_seq_info(s) #=None
-            exist_gt = self.seq_info['has_gt'] and assign_gt #=True
+            exist_gt = self.seq_info['has_gt'] and assign_gt #=False
             self.get_dets(det_file, s) #self.dets size (2112x14)
-            if exist_gt:
+            if exist_gt:#=False
                 self.get_gt(gt_file) #self.gt size (1295x11)
 
             # keep unclipped copy of detections and clip

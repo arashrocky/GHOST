@@ -68,6 +68,7 @@ class BaseTracker():
         # get experiment name
         self.get_name()
         logger.info("Executing experiment {}...".format(self.experiment))
+        # self.experiment = yolox_dets_OnTheFly:1_each_sample2:0.8:LastFrame:0.9LenThresh:0RemUnconf:0.0LastNFrames:10NanFirst:1MM:1sum_0.4InactPat:50DetConf:0.35NewTrackConf:0.45
 
         # make output dir
         os.makedirs(osp.join(self.output_dir, self.experiment), exist_ok=True)
@@ -159,7 +160,7 @@ class BaseTracker():
         <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
         """
 
-        all_tracks = self.make_results() #{..., i: [x1,y1,x2,y2,label], ...}
+        all_tracks = self.make_results() #{..., i:{im_index:[x1,y1,x2,y2,label]...}, ...}
 
         if self.tracker_cfg['length_thresh']:#=1
             all_tracks = self._remove_short_tracks(all_tracks)
@@ -186,7 +187,7 @@ class BaseTracker():
                          y1 + 1,
                          x2 - x1,
                          y2 - y1,
-                         -1, -1, bb[4], -1])
+                         -1, -1, bb[4], -1])#bb[4]=label
 
     def get_name(self):
         """
@@ -526,7 +527,8 @@ class BaseTracker():
                 self.inact_reid_thresh = np.mean(
                     dist[~act]) - 1 * np.std(dist[~act])
 
-    def visualize(self, detections, tr_ids, path, seq, frame, do_text=False):
+    # def visualize(self, detections, tr_ids, path, seq, frame, do_text=False):
+    def visualize(self, detections, tr_ids, path, seq, frame, do_text=True):#do_text= tr_id+ d[gt_id]
         if frame == 1:
             os.makedirs(
                 osp.join('visualizations', self.experiment, seq),

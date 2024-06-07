@@ -58,7 +58,7 @@ class Tracker(BaseTracker):
         # iterate over frames
         for frame_data in tqdm(seq, total=len(seq)):
             frame, path, boxes, gt_ids, vis, \
-                random_patches, whole_im, conf, label = frame_data
+                random_patches, whole_im, conf, label = frame_data #gt_ids is the only information coming from gt and gt_corresponding in BDDLoader (bdd100k_parser.py)
             # log if in training mode
             if i == 0:
                 logger.info(f'Network in training mode: {self.encoder.training}')
@@ -132,6 +132,7 @@ class Tracker(BaseTracker):
         self.tracks.update(self.inactive_tracks)
 
         # write results
+        # self.output_dir = 'out'
         self.write_results(self.output_dir, seq.name) #each line: <frame>, <id>, <bb_left>, <bb_top>, <bb_width>, <bb_height>, <conf>, <x>, <y>, <z>
 
         # reset thresholds if every / tbd for next sequence
@@ -342,7 +343,7 @@ class Tracker(BaseTracker):
 
         # solve at once
         if not sep: #if based on sep value in "combine_motion_appearance" dist of active and inactive was not separate
-            np.savetxt("dist_matrix.txt", dist, fmt='%.6f')
+            # np.savetxt("dist_matrix.txt", dist, fmt='%.6f')
             row, col = solve_dense(dist)
         # solve active first and inactive later
         else:
@@ -444,7 +445,7 @@ class Tracker(BaseTracker):
                     row, col, dist, detections, active_tracks, ids, tr_ids)
 
         # move tracks not used to inactive tracks
-        keys = list(self.tracks.keys())
+        keys = list(self.tracks.keys()) # self.tracks[self.id] => keys=self.id
         for k in keys:
             if k not in active_tracks:#If self.tracker_cfg['remove_unconfirmed'] is set to False, 
                 unconfirmed = len(#all tracks are considered unconfirmed regardless of the number of detections they have.

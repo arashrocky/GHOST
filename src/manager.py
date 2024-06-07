@@ -116,6 +116,7 @@ class Manager():
 
         if log:
             logger.info(self.tracker.experiment)
+            # self.tracker.experiment = yolox_dets_OnTheFly:1_each_sample2:0.8:LastFrame:0.9LenThresh:0RemUnconf:0.0LastNFrames:10NanFirst:1MM:1sum_0.4InactPat:50DetConf:0.35NewTrackConf:0.45
 
         mota, idf1 = 0, 0
 
@@ -223,17 +224,19 @@ class Manager():
 
     def MOT2BDD(self):
         files = os.listdir(os.path.join('out', self.tracker.experiment))
+        # self.tracker.experiment = yolox_dets_OnTheFly:1_each_sample2:0.8:LastFrame:0.9LenThresh:0RemUnconf:0.0LastNFrames:10NanFirst:1MM:1sum_0.4InactPat:50DetConf:0.35NewTrackConf:0.45
         os.makedirs(os.path.join(
             'out', self.tracker.experiment + '_orig'), exist_ok=True)
-        for seq in files:
+        for seq in files: # seq: each video frames
             if seq[-4:] == 'json':
                 continue
 
             seq_df = pd.read_csv(os.path.join(
                 'out', self.tracker.experiment, seq), names=col_names, index_col=False)
 
-            assert len(os.listdir('/storage/slurm/seidensc/datasets/BDD100/bdd100k/images/track/val/' + seq)
-                       ) >= seq_df['frame'].unique().shape[0], seq
+            # assert len(os.listdir('/storage/slurm/seidensc/datasets/BDD100/bdd100k/images/track/val/' + seq)
+            assert len(os.listdir('/data/arash/Datasets/GHOSTFiles/datasets/bdd100k/images/track/val/' + seq)
+                       ) >= seq_df['frame'].unique().shape[0], seq #the last "seq" is the message shown in case of AssertionError
 
             det_list = list()
             for frame in seq_df['frame'].unique():
@@ -262,7 +265,7 @@ class Manager():
             with open(os.path.join('out', self.tracker.experiment, seq + '.json'), 'w') as f:
                 json.dump(det_list, f)
 
-            os.rename(os.path.join('out', self.tracker.experiment, seq),
+            os.rename(os.path.join('out', self.tracker.experiment, seq), #moving tracking results from initial folder to the folder with "_orig"
                       os.path.join('out', self.tracker.experiment + '_orig', seq))
 
     def MOT2BDDTest(self):

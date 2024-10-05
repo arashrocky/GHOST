@@ -8,7 +8,7 @@ python tools/main_track.py \
     --inact_patience 50 \
     --combi sum_0.6 \
     --on_the_fly 1 \
-    --store_feats 0 \
+    --store_feats 1 \
     --det_file yolox_dets.txt \
     --det_conf 0.5 \
     --new_track_conf 0.55 \

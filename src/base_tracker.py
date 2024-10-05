@@ -528,7 +528,7 @@ class BaseTracker():
                     dist[~act]) - 1 * np.std(dist[~act])
 
     # def visualize(self, detections, tr_ids, path, seq, frame, do_text=False):
-    def visualize(self, detections, tr_ids, path, seq, frame, do_text=True):#do_text= tr_id+ d[gt_id]
+    def visualize(self, detections, tr_ids, path, seq, frame, do_text=True):#do_text=True outcome= tr_id+ d[gt_id]
         if frame == 1:
             os.makedirs(
                 osp.join('visualizations', self.experiment, seq),
@@ -568,7 +568,8 @@ class BaseTracker():
                     va='center',
                     rotation='vertical',
                     c=self.id_to_col[tr_id],
-                    fontsize=8)
+                    fontsize=20)
+                    # fontsize=8)
 
         ax.imshow(img)
         plt.axis('off')

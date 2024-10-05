@@ -151,6 +151,8 @@ class Tracker(BaseTracker):
             with open(path, 'w') as jf:
                 json.dump(self.features_, jf)
             self.features_ = defaultdict(dict)
+        
+        input('press enter to continue \n')
 
     def _track(self, detections, i):
         # get inactive tracks with inactive < patience

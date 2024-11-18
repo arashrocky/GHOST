@@ -59,15 +59,16 @@ class Tracker(BaseTracker):
         for frame_data in tqdm(seq, total=len(seq)):
             frame, path, boxes, gt_ids, vis, \
                 random_patches, whole_im, conf, label = frame_data #gt_ids is the only information coming from gt and gt_corresponding in BDDLoader (bdd100k_parser.py)
+            # "frame" is a tensor containing all the ROIs (Regions of Interest) of detected objects in each video frame.
             # log if in training mode
             if i == 0:
                 logger.info(f'Network in training mode: {self.encoder.training}')
-            self.i = i
+            self.i = i # is an integer zero-based frame id (no additional digits like frame_id)
 
             # batch norm experiments II on the fly
             self.normalization_experiments(random_patches, frame, i, seq)
 
-            # get frame id
+            # get frame id (is a 6 digits number)
             if 'bdd' in path:
                 self.frame_id = int(path.split(
                     '/')[-1].split('-')[-1].split('.')[0])

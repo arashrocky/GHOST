@@ -351,6 +351,7 @@ class Sequence():
             label.append(row['label'])
 
         # different scaling of networks
+        # res= tensor containing all the ROIs (Regions of Interest) of detected objects in each video frame.
         if self.net_type == "IBN":
             res = torch.stack(res, 0) * 255
         else:

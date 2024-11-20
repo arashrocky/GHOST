@@ -79,6 +79,7 @@ class Tracker(BaseTracker):
             detections = list()
 
             # forward pass
+            # 512-dim vector per ROI of bboxes
             feats = self.get_features(frame)
 
             # if just feeding for bn stats update
